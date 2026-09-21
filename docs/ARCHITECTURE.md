@@ -51,7 +51,7 @@ sequenceDiagram
 - `coursera_automation/items/dialogue.py`: Dialogue start and finish.
 - `coursera_automation/items/discussion.py`: Discussion response input.
 - `coursera_automation/items/quiz_solver.py`: NVIDIA LLM API integration.
-- `coursera_automation/items/quiz.py`: Quiz interaction, honor code, submission.
+- `coursera_automation/items/quiz.py`: Quiz interaction, type classification, honor code, submission.
 - `coursera_automation/items/navigator.py`: Dialog dismissal (including sound effects popup), resume, and next item navigation.
 - `coursera_automation/items/dispatcher.py`: Item detection and iteration loop.
 - `coursera_automation/main.py`: Browser lifecycle management across single and multi-instance executions.

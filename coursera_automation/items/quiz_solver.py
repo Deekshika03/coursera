@@ -18,7 +18,9 @@ def solve_quiz_with_llm(
     """Query NVIDIA LLM with questions and parse selected answer options."""
     client = OpenAI(base_url=cfg.nvidia_base_url, api_key=cfg.nvidia_api_key)
     prompt = (
-        "Answer these quiz questions. Respond ONLY in valid JSON matching:\n"
+        "Answer these quiz questions. For type 'selection', choose exactly one option. "
+        "For 'multiselect', choose all correct options.\n"
+        "Respond ONLY in valid JSON matching:\n"
         '{"answers": [{"index": 0, "selected": ["option text"]}]}\n\n'
         f"Questions:\n{json.dumps(questions, indent=2)}"
     )

@@ -27,3 +27,22 @@ def test_solve_quiz_with_llm_json() -> None:
         answers = solve_quiz_with_llm(questions, cfg)
 
         assert answers == {0: ["Option A"]}
+
+
+def test_solve_quiz_multiselect() -> None:
+    """Verify solver parses multiselect answers."""
+    mock_resp = MagicMock()
+    mock_resp.choices = [
+        MagicMock(
+            message=MagicMock(
+                content='{"answers": [{"index": 0, "selected": ["Opt A", "Opt B"]}]}'
+            )
+        )
+    ]
+    with patch("coursera_automation.items.quiz_solver.OpenAI") as mock_openai:
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = mock_resp
+        mock_openai.return_value = mock_client
+        cfg = Settings()
+        questions = [{"index": 0, "text": "Q1?", "options": ["Opt A", "Opt B"], "type": "multiselect"}]
+        assert solve_quiz_with_llm(questions, cfg) == {0: ["Opt A", "Opt B"]}
