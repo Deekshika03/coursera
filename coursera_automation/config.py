@@ -9,7 +9,7 @@ class Settings:
     """Application settings and runtime credentials."""
 
     login_url: str = os.getenv(
-        "COURSERA_LOGIN_URL", "https://www.coursera.org/#authMode=login"
+        "COURSERA_LOGIN_URL", "https://www.coursera.org"
     )
     course_url: str = os.getenv(
         "COURSERA_COURSE_URL",

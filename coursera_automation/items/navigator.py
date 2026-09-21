@@ -11,9 +11,9 @@ logger = logging.getLogger(__name__)
 
 
 def dismiss_dialogs(page: Page) -> None:
-    """Dismiss transient modals or notification dialogues."""
+    """Dismiss transient modals, in-app messages, or notification dialogues."""
     btn = page.locator(
-        'button:has-text("Got it"), button[aria-label="Close"], button:has-text("Skip")'
+        '.ab-close-button, button:has-text("Got it"), button[aria-label="Close"]'
     ).first
     if btn.is_visible(timeout=1000):
         btn.click()
@@ -21,13 +21,21 @@ def dismiss_dialogs(page: Page) -> None:
 
 
 def click_resume(page: Page, cfg: Settings) -> None:
-    """Click Resume or Start on the course home view."""
+    """Scroll vertically and click Resume button on course view."""
     dismiss_dialogs(page)
-    resume_btn = page.get_by_role(
-        "button", name=re.compile(r"resume|start", re.IGNORECASE)
-    ).or_(page.get_by_role("link", name=re.compile(r"resume|start", re.IGNORECASE))).first
+    lbl = page.locator("span.cds-button-label", has_text=re.compile(r"resume", re.IGNORECASE))
+    resume_btn = page.locator('button, [role="button"]').filter(has=lbl).or_(
+        page.get_by_role("button", name=re.compile(r"resume|start", re.IGNORECASE))
+    ).first
+
+    for _ in range(8):
+        if resume_btn.is_visible():
+            break
+        page.mouse.wheel(0, 500)
+        page.wait_for_timeout(400)
 
     resume_btn.wait_for(state="visible", timeout=cfg.timeout_ms)
+    resume_btn.scroll_into_view_if_needed()
     logger.info("Clicking course resume/start CTA...")
     resume_btn.click()
     page.wait_for_timeout(3000)
@@ -36,12 +44,11 @@ def click_resume(page: Page, cfg: Settings) -> None:
 def click_next_item(page: Page, cfg: Settings) -> bool:
     """Locate and click 'Go to next item' or 'Next item'."""
     dismiss_dialogs(page)
-    next_btn = (
-        page.get_by_role("button", name=re.compile(r"(go to )?next item", re.IGNORECASE))
-        .or_(page.get_by_role("link", name=re.compile(r"(go to )?next item", re.IGNORECASE)))
-        .or_(page.locator('[data-testid*="next-item"]'))
-        .first
-    )
+    next_btn = page.get_by_role(
+        "button", name=re.compile(r"(go to )?next item", re.IGNORECASE)
+    ).or_(
+        page.get_by_role("link", name=re.compile(r"(go to )?next item", re.IGNORECASE))
+    ).or_(page.locator('[data-testid*="next-item"]')).first
 
     if next_btn.is_visible(timeout=cfg.timeout_ms):
         logger.info("Advancing via 'Go to next item'...")

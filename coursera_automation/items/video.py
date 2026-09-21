@@ -1,4 +1,4 @@
-"""Video playback automation: 2x speed adjustment and duration waiting."""
+"""Video playback automation: autoplay handling, 2x speed, duration wait."""
 
 import logging
 import math
@@ -19,22 +19,29 @@ def calculate_video_wait(duration_seconds: float) -> int:
 
 
 def handle_video(page: Page, cfg: Settings) -> None:
-    """Keep video playing at 2x speed and wait for computed duration."""
-    logger.info("Handling video item...")
-    page.evaluate("() => document.querySelector('video')?.play()")
+    """Handle autoplaying video: reveal controls, set 2x speed, and wait."""
+    logger.info("Handling video item (autoplay active)...")
+    vid = page.locator("video").first
+    vid.wait_for(state="attached", timeout=cfg.timeout_ms)
 
-    # Click 1x speed button 4 times to reach 2x
-    speed_btn = page.locator('button:has-text("1x"), button[aria-label*="speed" i]').first
+    # Hover over controls container to unhide control bar
+    controls = page.locator(".rc-VideoControlsContainer, video").first
+    if controls.is_visible(timeout=3000):
+        controls.hover()
+        page.wait_for_timeout(500)
+
+    speed_btn = page.locator(
+        'button[aria-label="Video playback rate switcher"]'
+    ).or_(page.locator('[aria-label*="playback rate" i]')).first
+
     if speed_btn.is_visible(timeout=3000):
         for _ in range(4):
             speed_btn.click()
             page.wait_for_timeout(300)
 
-    # Ensure playbackRate is 2.0
     page.evaluate(
-        "() => { const v = document.querySelector('video'); if (v) v.playbackRate = 2.0; }"
+        "() => { const v = document.querySelector('video'); if (v) { v.playbackRate = 2.0; v.play(); } }"
     )
-
     duration = float(
         page.evaluate("() => document.querySelector('video')?.duration || 0")
     )
