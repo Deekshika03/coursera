@@ -11,15 +11,15 @@ logger = logging.getLogger(__name__)
 
 
 def wait_for_auth_complete(page: Page) -> None:
-    """Wait for manual puzzle resolution and verified authenticated session."""
-    logger.info("Waiting for puzzle completion and login verification...")
-    for _ in range(120):
-        cookies = [c["name"] for c in page.context.cookies()]
-        has_auth = any(k in cookies for k in ("CAUTH", "c_user", "__204u"))
-        has_prof = page.locator(
-            'button[data-e2e="header-profile-menu"], button[aria-label*="profile" i]'
-        ).first.is_visible()
-        if has_auth or has_prof:
+    """Wait for user to solve puzzle and verify login session."""
+    logger.info("Please solve the puzzle in the browser window if shown...")
+    for _ in range(180):
+        cookies = {c["name"]: c["value"] for c in page.context.cookies()}
+        has_cauth = bool(cookies.get("CAUTH"))
+        prof = page.locator('button[data-e2e="header-profile-menu"]').first
+        dialog = page.locator('div[role="dialog"]').first
+
+        if (has_cauth or prof.is_visible()) and not dialog.is_visible():
             logger.info("Authentication verified! Proceeding to course...")
             return
         page.wait_for_timeout(1000)

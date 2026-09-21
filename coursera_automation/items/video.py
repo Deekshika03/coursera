@@ -1,4 +1,4 @@
-"""Video playback automation: autoplay handling, 2x speed, duration wait."""
+"""Video playback automation: play click, 2x speed, duration wait."""
 
 import logging
 import math
@@ -19,15 +19,20 @@ def calculate_video_wait(duration_seconds: float) -> int:
 
 
 def handle_video(page: Page, cfg: Settings) -> None:
-    """Handle autoplaying video: reveal controls, set 2x speed, and wait."""
-    logger.info("Handling video item (autoplay active)...")
-    vid = page.locator("video").first
-    vid.wait_for(state="attached", timeout=cfg.timeout_ms)
+    """Start video, reveal controls, set 2x speed, and wait."""
+    logger.info("Handling video item...")
+    play_btn = page.locator(
+        '.rc-VideoControlsContainer button, button[aria-label*="play" i], .rc-VideoControlsContainer'
+    ).first
+    if play_btn.is_visible(timeout=cfg.timeout_ms):
+        play_btn.click(force=True)
+        page.wait_for_timeout(1000)
 
-    # Hover over controls container to unhide control bar
-    controls = page.locator(".rc-VideoControlsContainer, video").first
-    if controls.is_visible(timeout=3000):
-        controls.hover()
+    page.evaluate("() => document.querySelector('video')?.play()")
+
+    box = page.locator("video, .rc-VideoControlsContainer").first.bounding_box()
+    if box:
+        page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
         page.wait_for_timeout(500)
 
     speed_btn = page.locator(
@@ -36,7 +41,7 @@ def handle_video(page: Page, cfg: Settings) -> None:
 
     if speed_btn.is_visible(timeout=3000):
         for _ in range(4):
-            speed_btn.click()
+            speed_btn.click(force=True)
             page.wait_for_timeout(300)
 
     page.evaluate(
