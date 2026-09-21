@@ -25,7 +25,8 @@ def handle_quiz(page: Page, cfg: Settings) -> None:
         start_btn.click()
         page.wait_for_timeout(3000)
 
-    q_locators = page.locator('fieldset, [data-testid*="question"]').all()
+    q_sel = 'fieldset, [role="radiogroup"], [data-testid*="question"]'
+    q_locators = [q for q in page.locator(q_sel).all() if not q.locator('#agreement-checkbox-base').count()]
     questions: list[dict[str, Any]] = []
     for idx, q_loc in enumerate(q_locators):
         text, q_type = q_loc.inner_text().strip(), _detect_type(q_loc)
@@ -44,8 +45,7 @@ def handle_quiz(page: Page, cfg: Settings) -> None:
                 btn.click()
                 logger.info("Question %d: checked '%s'", idx + 1, opt_text)
 
-    sel = 'label:has-text(", understand and agree."), [aria-label*="understand and agree" i]'
-    agree = page.locator(sel).first
+    agree = page.locator('#agreement-checkbox-base, label:has-text(", understand and agree.")').first
     if agree.is_visible(timeout=cfg.timeout_ms):
         agree.scroll_into_view_if_needed()
         agree.click(force=True)
