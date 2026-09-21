@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def handle_lab(page: Page, cfg: Settings) -> None:
-    """Check I agree, launch app, and prepare for next item."""
+    """Check I agree, launch app in background, and prepare for next item."""
     logger.info("Handling lab item...")
     page.wait_for_load_state("domcontentloaded")
 
@@ -47,5 +47,7 @@ def handle_lab(page: Page, cfg: Settings) -> None:
     launch.wait_for(state="visible", timeout=cfg.timeout_ms)
     launch.scroll_into_view_if_needed()
     launch.click(force=True)
-    logger.info("Clicked 'Launch App'.")
-    page.wait_for_timeout(3000)
+    logger.info("Clicked 'Launch App'. Keeping current tab in foreground...")
+    page.wait_for_timeout(1000)
+    page.bring_to_front()
+    page.wait_for_timeout(2000)
