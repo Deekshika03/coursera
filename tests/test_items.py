@@ -3,16 +3,16 @@
 from coursera_automation.items.video import calculate_video_wait
 
 
-def test_video_duration_ceil() -> None:
-    """Verify video wait calculation matches user rules."""
-    # 7 minutes = 420 seconds -> 3.5 mins -> ceil to 4 mins = 240 seconds
-    assert calculate_video_wait(420.0) == 240
+def test_video_duration_exact() -> None:
+    """Verify video wait calculation uses exact duration / 2.0 without ceiling."""
+    # 7 minutes = 420 seconds -> 210.0 seconds
+    assert calculate_video_wait(420.0) == 210.0
 
-    # 5 minutes = 300 seconds -> 2.5 mins -> ceil to 3 mins = 180 seconds
-    assert calculate_video_wait(300.0) == 180
+    # 5 minutes = 300 seconds -> 150.0 seconds
+    assert calculate_video_wait(300.0) == 150.0
 
-    # 10 minutes = 600 seconds -> 5 mins -> ceil to 5 mins = 300 seconds
-    assert calculate_video_wait(600.0) == 300
+    # 75 seconds -> 37.5 seconds
+    assert calculate_video_wait(75.0) == 37.5
 
-    # Short video (30 seconds) -> min 1 minute = 60 seconds
-    assert calculate_video_wait(30.0) == 60
+    # Minimum threshold (0.5 seconds) -> min 1.0 second
+    assert calculate_video_wait(0.5) == 1.0

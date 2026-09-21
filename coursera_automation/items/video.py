@@ -1,7 +1,6 @@
-"""Video playback automation: play click, 2x speed, duration wait."""
+"""Video playback automation: play click, conditional 2x speed, exact duration wait."""
 
 import logging
-import math
 import time
 
 from playwright.sync_api import Page
@@ -11,15 +10,13 @@ from coursera_automation.config import Settings
 logger = logging.getLogger(__name__)
 
 
-def calculate_video_wait(duration_seconds: float) -> int:
-    """Calculate wait time in seconds: ceil(duration_minutes / 2) * 60."""
-    duration_minutes = duration_seconds / 60.0
-    wait_minutes = max(1, math.ceil(duration_minutes / 2.0))
-    return int(wait_minutes * 60)
+def calculate_video_wait(duration_seconds: float) -> float:
+    """Calculate exact wait time in seconds at 2x speed: duration / 2.0."""
+    return max(1.0, duration_seconds / 2.0)
 
 
 def handle_video(page: Page, cfg: Settings) -> None:
-    """Start video, reveal controls, set 2x speed, and wait."""
+    """Start video, reveal controls, set 2x speed if needed, and wait."""
     logger.info("Handling video item...")
     play_btn = page.locator(
         '.rc-VideoControlsContainer button, button[aria-label*="play" i], .rc-VideoControlsContainer'
@@ -39,7 +36,14 @@ def handle_video(page: Page, cfg: Settings) -> None:
         'button[aria-label="Video playback rate switcher"]'
     ).or_(page.locator('[aria-label*="playback rate" i]')).first
 
-    if speed_btn.is_visible(timeout=3000):
+    rate = float(
+        page.evaluate("() => document.querySelector('video')?.playbackRate || 1")
+    )
+    is_2x = rate == 2.0 or (
+        speed_btn.is_visible() and "2x" in speed_btn.inner_text().lower()
+    )
+
+    if speed_btn.is_visible(timeout=3000) and not is_2x:
         for _ in range(4):
             speed_btn.click(force=True)
             page.wait_for_timeout(300)
@@ -50,6 +54,6 @@ def handle_video(page: Page, cfg: Settings) -> None:
     duration = float(
         page.evaluate("() => document.querySelector('video')?.duration || 0")
     )
-    wait_secs = calculate_video_wait(duration) if duration > 0 else 60
-    logger.info("Video duration: %.1fs. Waiting %ds at 2x...", duration, wait_secs)
+    wait_secs = calculate_video_wait(duration) if duration > 0 else 30.0
+    logger.info("Video duration: %.1fs. Waiting %.1fs at 2x...", duration, wait_secs)
     time.sleep(wait_secs)
