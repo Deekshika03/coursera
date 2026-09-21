@@ -1,46 +1,58 @@
 # Coursera Playwright Automation
 
-Automated workflow for logging into Coursera, navigating to the Generative AI Specialization, resuming courses, and progressing through learning items using Playwright and `uv`.
+Automated workflow for logging into Coursera, navigating to courses, resuming progress, and progressing through learning items using Playwright and `uv`.
 
 ## Supported Learning Items
 
 | Item | Automated Behavior |
 |---|---|
-| **Video** | Plays at $2\times$ speed (clicks $1\times$ 4 times) and waits for `ceil(duration/120)` minutes before advancing |
-| **Lab** | Checks "I agree" checkbox, clicks "Launch app", and advances |
+| **Video** | Checks if already $2\times$ speed before switching; waits exact `duration / 2.0` seconds plus a 6-second completion buffer |
+| **Lab** | Checks "I agree" checkbox, clicks "Launch app/lab" in background tab without switching focus |
 | **Reading** | Clicks "Mark as completed" and advances |
 | **Dialogue** | Clicks "Start dialogue" $\to$ "End dialogue" and advances |
 | **Discussion** | Types `"ok"` into chatbox, clicks "Reply", and advances |
-| **Quiz** | Clicks Start/Resume assignment, queries NVIDIA LLM (`z-ai/glm-5.3`) for answers, checks honor code agreement, submits, and advances |
+| **Quiz** | Queries NVIDIA LLM (`z-ai/glm-5.3`) for answers, checks honor code agreement, submits, and advances |
+
+## Multi-Instance Execution
+
+Support for multiple concurrent/sequential instances via `instances.json`:
+```json
+[
+  {
+    "email": "user@example.com",
+    "password": "Password123!",
+    "course_url": "https://www.coursera.org/specializations/generative-ai-for-software-developers",
+    "headless": false,
+    "max_items": 50
+  }
+]
+```
+If `instances.json` is omitted, the automation falls back to the single default instance in `.env` / `config.py`. See `instances.example.json`.
+
+## Dialog & Popup Management
+
+`coursera_automation/items/navigator.py` automatically dismisses:
+- Transient marketing/help dialogues (`Got it`, close icons)
+- Feature announcements (e.g. "We added sound effects" popup cross icon)
+- End-screen video cards and bottom-bar next buttons
 
 ## Architecture Overview
 
-Adheres to NASA JPL Rule 4 (≤ 60 lines per module):
+Strictly adheres to NASA JPL Rule 4 (≤ 60 lines per module):
 - `coursera_automation/config.py`: Environment configuration and credentials.
-- `coursera_automation/auth.py`: Authentication steps.
+- `coursera_automation/auth.py`: Authentication steps with manual Arkose puzzle wait.
+- `coursera_automation/instances.py`: Multi-instance configuration loader and fallback.
 - `coursera_automation/course.py`: Specialization navigation & course entry.
-- `coursera_automation/items/video.py`: Video playback and ceiling-wait logic.
-- `coursera_automation/items/lab.py`: Lab agreement and app launch.
+- `coursera_automation/items/video.py`: Video playback, exact 2x duration wait, and 6s buffer.
+- `coursera_automation/items/lab.py`: Lab agreement and background app launch.
 - `coursera_automation/items/reading.py`: Reading completion.
 - `coursera_automation/items/dialogue.py`: Dialogue start and finish.
 - `coursera_automation/items/discussion.py`: Discussion response input.
 - `coursera_automation/items/quiz_solver.py`: NVIDIA LLM API integration.
 - `coursera_automation/items/quiz.py`: Quiz interaction and submission.
-- `coursera_automation/items/navigator.py`: Resume and next item navigation.
+- `coursera_automation/items/navigator.py`: Dialog dismissal, resume, and next item navigation.
 - `coursera_automation/items/dispatcher.py`: Item detection and iteration loop.
-- `coursera_automation/main.py`: Browser orchestration.
-
-## Configuration
-
-| Variable | Description | Default |
-|---|---|---|
-| `COURSERA_EMAIL` | Account email | `24bai70310@cuchd.in` |
-| `COURSERA_PASSWORD` | Account password | `Lakshya.24AI` |
-| `COURSERA_HEADLESS` | Run in headless mode | `false` |
-| `COURSERA_MAX_ITEMS` | Maximum items to process | `25` |
-| `NVIDIA_API_KEY` | NVIDIA API Key for LLM solver | *(configured)* |
-| `NVIDIA_BASE_URL` | NVIDIA API Base URL | `https://integrate.api.nvidia.com/v1` |
-| `NVIDIA_MODEL` | Model for quiz solving | `z-ai/glm-5.3` |
+- `coursera_automation/main.py`: Browser orchestration for single and multi-instance runs.
 
 ## Usage & Quality Gates
 
