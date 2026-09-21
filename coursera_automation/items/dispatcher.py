@@ -25,17 +25,17 @@ def dispatch_item(page: Page, cfg: Settings) -> None:
         has_text=re.compile(r"launch (app|lab)", re.IGNORECASE)
     ).first.is_visible(timeout=1500)
 
-    if page.locator("video").is_visible(timeout=2000):
+    if page.locator("video").first.is_visible(timeout=2000):
         handle_video(page, cfg)
     elif is_lab:
         handle_lab(page, cfg)
-    elif page.locator('button:has-text("Start dialogue")').is_visible(
+    elif page.locator('button:has-text("Start dialogue")').first.is_visible(
         timeout=1000
     ):
         handle_dialogue(page, cfg)
-    elif page.locator('button:has-text("Reply")').is_visible(timeout=1000):
+    elif page.locator('button:has-text("Reply")').first.is_visible(timeout=1000):
         handle_discussion(page, cfg)
-    elif page.locator('button:has-text("assignment")').is_visible(timeout=1000):
+    elif page.locator('button:has-text("assignment")').first.is_visible(timeout=1000):
         handle_quiz(page, cfg)
     else:
         handle_reading(page, cfg)
