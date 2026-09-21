@@ -29,10 +29,11 @@ def dispatch_item(page: Page, cfg: Settings) -> None:
         handle_video(page, cfg)
     elif is_lab:
         handle_lab(page, cfg)
-    elif page.locator('button:has-text("Start dialogue")').first.is_visible(
-        timeout=1000
-    ):
+    elif page.locator(
+        'button:has(span.cds-button-label:has-text("Start Dialogue")), button:has-text("Start dialogue")'
+    ).first.is_visible(timeout=1000):
         handle_dialogue(page, cfg)
+
     elif page.locator('button:has-text("Reply")').first.is_visible(timeout=1000):
         handle_discussion(page, cfg)
     elif page.locator('button:has-text("assignment"), button:has-text("Try again")').first.is_visible(

@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from coursera_automation.config import Settings
 from coursera_automation.items.dispatcher import dispatch_item
-from coursera_automation.items.navigator import dismiss_dialogs
+from coursera_automation.items.navigator import click_next_item, dismiss_dialogs
 from coursera_automation.items.video import calculate_video_wait
 
 
@@ -41,3 +41,14 @@ def test_dismiss_dialogs_honor_code() -> None:
     page.locator.side_effect = lambda s: honor if "HonorCodeModal" in s else MagicMock(first=MagicMock(is_visible=lambda timeout=0: False))
     dismiss_dialogs(page)
     btn.click.assert_called_once_with(force=True)
+
+
+def test_click_next_item_top_banner() -> None:
+    """Verify click_next_item clicks TopBannerCTAButton."""
+    page, cfg, btn = MagicMock(), Settings(), MagicMock()
+    btn.first.is_visible.return_value = True
+    page.locator.side_effect = lambda s: btn if "TopBannerCTAButton" in s else MagicMock(first=MagicMock(is_visible=lambda timeout=0: False))
+    with patch("coursera_automation.items.navigator.dismiss_dialogs"):
+        assert click_next_item(page, cfg) is True
+    btn.first.click.assert_called_once_with(force=True)
+
