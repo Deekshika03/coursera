@@ -1,6 +1,7 @@
 """Item dispatcher: identifies item type and coordinates sequential execution."""
 
 import logging
+import re
 
 from playwright.sync_api import Page
 
@@ -19,9 +20,14 @@ logger = logging.getLogger(__name__)
 def dispatch_item(page: Page, cfg: Settings) -> None:
     """Detect current item type and execute corresponding handler."""
     dismiss_dialogs(page)
+    is_lab = any(k in page.url for k in ("/lab", "/ungradedLab", "/programming"))
+    is_lab = is_lab or page.locator('button, a, [role="button"]').filter(
+        has_text=re.compile(r"launch (app|lab)", re.IGNORECASE)
+    ).first.is_visible(timeout=1500)
+
     if page.locator("video").is_visible(timeout=2000):
         handle_video(page, cfg)
-    elif page.locator('button:has-text("Launch app")').is_visible(timeout=1000):
+    elif is_lab:
         handle_lab(page, cfg)
     elif page.locator('button:has-text("Start dialogue")').is_visible(
         timeout=1000
